@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+*.pyo
+rubrica/rubrica.db
+*.db
+*.db-shm
+*.db-wal
+.env
