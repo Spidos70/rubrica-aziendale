@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% block title %}Accesso – Ferie Estive 2026{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center mt-5">
+  <div class="col-sm-10 col-md-6 col-lg-4">
+    <div class="card shadow border-0">
+      <div class="card-header bg-primary text-white py-3">
+        <h5 class="mb-0"><i class="bi bi-person-badge me-2"></i>Identifica chi sei</h5>
+        <div class="text-white-50 small mt-1">Inserisci nome e cognome per procedere con la scelta delle ferie</div>
+      </div>
+      <div class="card-body p-4">
+        <form method="POST" action="{{ url_for('seleziona_dipendente') }}" autocomplete="off">
+          <div class="mb-3">
+            <label class="form-label fw-semibold text-secondary small">COGNOME</label>
+            <div class="input-group">
+              <span class="input-group-text bg-light"><i class="bi bi-person text-primary"></i></span>
+              <input type="text" name="cognome" class="form-control form-control-lg"
+                     placeholder="es. Rossi" required autofocus
+                     style="text-transform:capitalize">
+            </div>
+          </div>
+          <div class="mb-4">
+            <label class="form-label fw-semibold text-secondary small">NOME</label>
+            <div class="input-group">
+              <span class="input-group-text bg-light"><i class="bi bi-person text-primary"></i></span>
+              <input type="text" name="nome" class="form-control form-control-lg"
+                     placeholder="es. Mario" required
+                     style="text-transform:capitalize">
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold">
+            <i class="bi bi-arrow-right-circle me-2"></i>Vai alla scelta ferie
+          </button>
+        </form>
+      </div>
+      <div class="card-footer bg-light text-center text-muted small py-3">
+        <i class="bi bi-info-circle me-1"></i>
+        Se hai già scelto le ferie, inserisci gli stessi dati per modificare la tua scelta.
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

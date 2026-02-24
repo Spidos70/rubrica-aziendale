@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+{% block title %}Accesso – Ferie Estive 2026{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center mt-5">
+  <div class="col-sm-10 col-md-6 col-lg-4">
+    <div class="card shadow border-0">
+      <div class="card-header bg-primary text-white text-center py-4">
+        <div class="fs-1 mb-1"><i class="bi bi-sun-fill text-warning"></i></div>
+        <h4 class="mb-0 fw-bold">Ferie Estive 2026</h4>
+        <div class="text-white-50 small mt-1">Prenotazione settimane di ferie</div>
+      </div>
+      <div class="card-body p-4">
+        <form method="POST" action="{{ url_for('login') }}">
+          <div class="mb-3">
+            <label class="form-label fw-semibold text-secondary small">NOME UTENTE</label>
+            <div class="input-group">
+              <span class="input-group-text bg-light"><i class="bi bi-person text-primary"></i></span>
+              <input type="text" name="username" class="form-control" placeholder="Nome utente" required autofocus>
+            </div>
+          </div>
+          <div class="mb-4">
+            <label class="form-label fw-semibold text-secondary small">PASSWORD</label>
+            <div class="input-group">
+              <span class="input-group-text bg-light"><i class="bi bi-lock text-primary"></i></span>
+              <input type="password" name="password" class="form-control" placeholder="Password" required>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold">
+            <i class="bi bi-box-arrow-in-right me-2"></i>Accedi
+          </button>
+        </form>
+      </div>
+      <div class="card-footer bg-light text-center text-muted small py-3">
+        Utilizza le credenziali aziendali per accedere
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

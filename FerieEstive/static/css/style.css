@@ -1,0 +1,224 @@
+/* ── Week Cards (dashboard) ─────────────────────────────────── */
+.week-card {
+  background: #fff;
+  border: 2px solid #dee2e6;
+  border-radius: .6rem;
+  padding: .6rem .75rem;
+  cursor: pointer;
+  transition: all .15s ease;
+  position: relative;
+  user-select: none;
+  min-height: 90px;
+}
+
+.week-card:hover {
+  border-color: #0d6efd;
+  background: #f0f6ff;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(13,110,253,.15);
+}
+
+.week-card.week-highlight {
+  border-color: #86b7fe;
+  background: #f0f6ff;
+  animation: pulse-border .7s ease-in-out infinite alternate;
+}
+
+@keyframes pulse-border {
+  from { border-color: #86b7fe; box-shadow: none; }
+  to   { border-color: #0d6efd; box-shadow: 0 0 0 3px rgba(13,110,253,.15); }
+}
+
+.week-card.week-full {
+  background: #fff5f5;
+  border-color: #f5c2c7;
+  cursor: not-allowed;
+  opacity: .7;
+}
+.week-card.week-full:hover {
+  transform: none;
+  box-shadow: none;
+  border-color: #f5c2c7;
+  background: #fff5f5;
+}
+
+/* ── Selected states (4 colori) ─────────────────────────────── */
+.week-card.selected-ferragosto {
+  border-color: #f97316;
+  background: #fff7ed;
+  box-shadow: 0 0 0 3px rgba(249,115,22,.2);
+}
+.week-card.selected-aggiuntiva {
+  border-color: #0d6efd;
+  background: #e8f0ff;
+  box-shadow: 0 0 0 3px rgba(13,110,253,.2);
+}
+.week-card.selected-riserva {
+  border-color: #6f42c1;
+  background: #f3e8ff;
+  box-shadow: 0 0 0 3px rgba(111,66,193,.2);
+}
+.week-card.selected-quarta {
+  border-color: #198754;
+  background: #edfaf2;
+  box-shadow: 0 0 0 3px rgba(25,135,84,.2);
+}
+
+.week-num   { font-weight: 700; font-size: .85rem; color: #212529; }
+.week-dates { font-size: .72rem; color: #6c757d; margin-top: 1px; }
+.week-count { font-size: .68rem; color: #6c757d; margin-top: 3px; }
+
+/* Mini-badge in basso a destra della card settimana */
+.week-badge {
+  position: absolute;
+  bottom: .35rem;
+  right: .35rem;
+  font-size: .58rem;
+  font-weight: 700;
+  padding: .1rem .3rem;
+  border-radius: .25rem;
+  text-transform: uppercase;
+  letter-spacing: .02em;
+  white-space: nowrap;
+}
+.ferragosto-badge { background: #f97316; color: #fff; }
+.aggiuntiva-badge { background: #0d6efd; color: #fff; }
+.riserva-badge    { background: #6f42c1; color: #fff; }
+.quarta-badge     { background: #198754; color: #fff; }
+
+/* ── Selection Badges (pannello 4 slot) ─────────────────────── */
+.slot-label {
+  font-size: .68rem;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  margin-bottom: .35rem;
+}
+.ferragosto-label { color: #c2410c; }
+.aggiuntiva-label { color: #0a58ca; }
+.riserva-label    { color: #5a2d82; }
+.quarta-label     { color: #146c43; }
+
+.selection-badge {
+  border: 2px dashed #dee2e6;
+  border-radius: .5rem;
+  padding: .55rem .85rem;
+  min-height: 54px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  font-size: .82rem;
+  color: #6c757d;
+  cursor: pointer;
+  transition: all .15s ease;
+  background: #f8f9fa;
+}
+.selection-badge:hover   { background: #e9ecef; border-color: #adb5bd; }
+.selection-badge.disabled-slot {
+  opacity: .45; cursor: not-allowed;
+}
+.selection-badge.disabled-slot:hover {
+  background: #f8f9fa; border-color: #dee2e6;
+}
+
+/* Stato "in selezione" */
+.selection-badge.selecting {
+  border-style: solid;
+  animation: pulse-badge .6s ease-in-out infinite alternate;
+}
+.selection-badge.ferragosto.selecting { border-color:#f97316; background:#fff7ed; color:#c2410c; }
+.selection-badge.aggiuntiva.selecting { border-color:#0d6efd; background:#e8f0ff; color:#0a58ca; }
+.selection-badge.riserva.selecting    { border-color:#6f42c1; background:#f3e8ff; color:#5a2d82; }
+.selection-badge.quarta.selecting     { border-color:#198754; background:#edfaf2; color:#146c43; }
+
+@keyframes pulse-badge {
+  from { opacity: 1; }
+  to   { opacity: .65; }
+}
+
+/* Stato "attivo" (settimana selezionata) */
+.selection-badge.active.ferragosto {
+  border-style: solid; border-color: #f97316;
+  background: #fff7ed; color: #c2410c; font-weight: 600;
+}
+.selection-badge.active.aggiuntiva {
+  border-style: solid; border-color: #0d6efd;
+  background: #e8f0ff; color: #0a58ca; font-weight: 600;
+}
+.selection-badge.active.riserva {
+  border-style: solid; border-color: #6f42c1;
+  background: #f3e8ff; color: #5a2d82; font-weight: 600;
+}
+.selection-badge.active.quarta {
+  border-style: solid; border-color: #198754;
+  background: #edfaf2; color: #146c43; font-weight: 600;
+}
+
+/* ── Section headers (dashboard prima/dopo) ─────────────────── */
+.section-header {
+  font-size: .78rem;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  padding: .4rem .75rem;
+  border-radius: .4rem;
+}
+.prima-header {
+  background: linear-gradient(135deg, #fff7ed, #fef3c7);
+  color: #92400e;
+  border-left: 3px solid #f97316;
+}
+.dopo-header {
+  background: linear-gradient(135deg, #eff6ff, #e0f2fe);
+  color: #1e3a5f;
+  border-left: 3px solid #0d6efd;
+}
+
+/* ── Admin: Grafico settimane ───────────────────────────────── */
+.grafico-card {
+  border: 1px solid #dee2e6;
+  border-radius: .5rem;
+  padding: .6rem .75rem;
+  background: #fff;
+}
+.nomi-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .25rem;
+  margin-top: .35rem;
+}
+.nome-chip {
+  display: inline-block;
+  font-size: .65rem;
+  font-weight: 600;
+  padding: .1rem .4rem;
+  border-radius: .25rem;
+  border: 1px solid;
+  white-space: nowrap;
+}
+
+/* ── Admin: Week config cards ───────────────────────────────── */
+.admin-week-card {
+  border: 1px solid #dee2e6;
+  border-radius: .5rem;
+  padding: .5rem .65rem;
+  background: #f8f9fa;
+  transition: all .15s;
+}
+.admin-week-card.enabled {
+  background: #fff;
+  border-color: #a3cfbb;
+}
+
+/* ── Legenda dot ────────────────────────────────────────────── */
+.legend-dot {
+  display: inline-block;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* ── Misc ───────────────────────────────────────────────────── */
+.card { border-radius: .6rem !important; }
+.table-responsive { border-radius: 0 0 .6rem .6rem; }

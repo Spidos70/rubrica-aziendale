@@ -1,0 +1,452 @@
+{% extends 'base.html' %}
+{% block title %}Scelta Ferie – {{ dipendente.nome_completo }}{% endblock %}
+
+{% block content %}
+<div class="mt-4">
+
+  <!-- Header -->
+  <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+    <div>
+      <h4 class="mb-0 fw-bold">
+        <i class="bi bi-sun-fill text-warning me-2"></i>Scelta Ferie Estive 2026
+      </h4>
+      <div class="text-muted small mt-1">
+        <i class="bi bi-person-circle me-1"></i>{{ dipendente.nome_completo }}
+      </div>
+    </div>
+    {% if scelta and scelta.settimana_ferragosto %}
+      <span class="badge bg-success fs-6 px-3 py-2">
+        <i class="bi bi-check-circle me-1"></i>Scelta salvata
+      </span>
+    {% else %}
+      <span class="badge bg-warning text-dark fs-6 px-3 py-2">
+        <i class="bi bi-clock me-1"></i>Nessuna scelta salvata
+      </span>
+    {% endif %}
+  </div>
+
+  <!-- Pannello 4 slot -->
+  <div class="card border-0 shadow-sm mb-3">
+    <div class="card-body p-3">
+      <div class="row g-2">
+
+        <!-- Slot 1: Ferragosto (obbligatorio) -->
+        <div class="col-12 col-sm-6 col-lg-3">
+          <div class="slot-label ferragosto-label">
+            <i class="bi bi-sun me-1"></i>SETT. FERRAGOSTO <span class="text-danger">*</span>
+          </div>
+          <div id="badge-ferragosto"
+               class="selection-badge ferragosto {% if scelta and scelta.settimana_ferragosto %}active{% endif %}"
+               onclick="activateSlot('ferragosto')">
+            {% if scelta and scelta.settimana_ferragosto %}
+              {% set wi = get_week_info(scelta.settimana_ferragosto) %}
+              <i class="bi bi-calendar-check me-1"></i>
+              Sett. {{ scelta.settimana_ferragosto }}
+              <span class="d-block small mt-1 opacity-75">{{ wi['inizio'].strftime('%d/%m') }} – {{ wi['fine'].strftime('%d/%m') }}</span>
+            {% else %}
+              <i class="bi bi-hand-index me-1"></i>Clicca una settimana
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Slot 2: Aggiuntiva -->
+        <div class="col-12 col-sm-6 col-lg-3">
+          <div class="slot-label aggiuntiva-label">
+            <i class="bi bi-plus-circle me-1"></i>SETT. AGGIUNTIVA
+          </div>
+          <div id="badge-aggiuntiva"
+               class="selection-badge aggiuntiva {% if scelta and scelta.settimana_aggiuntiva %}active{% endif %}"
+               onclick="activateSlot('aggiuntiva')">
+            {% if scelta and scelta.settimana_aggiuntiva %}
+              {% set wi = get_week_info(scelta.settimana_aggiuntiva) %}
+              <i class="bi bi-calendar-check me-1"></i>
+              Sett. {{ scelta.settimana_aggiuntiva }}
+              <span class="d-block small mt-1 opacity-75">{{ wi['inizio'].strftime('%d/%m') }} – {{ wi['fine'].strftime('%d/%m') }}</span>
+            {% else %}
+              <i class="bi bi-hand-index me-1"></i>Clicca una settimana
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Slot 3: Riserva aggiuntiva -->
+        <div class="col-12 col-sm-6 col-lg-3">
+          <div class="slot-label riserva-label">
+            <i class="bi bi-bookmark me-1"></i>RISERVA AGGIUNTIVA
+          </div>
+          <div id="badge-riserva"
+               class="selection-badge riserva {% if scelta and scelta.settimana_riserva %}active{% endif %}"
+               onclick="activateSlot('riserva')">
+            {% if scelta and scelta.settimana_riserva %}
+              {% set wi = get_week_info(scelta.settimana_riserva) %}
+              <i class="bi bi-calendar-check me-1"></i>
+              Sett. {{ scelta.settimana_riserva }}
+              <span class="d-block small mt-1 opacity-75">{{ wi['inizio'].strftime('%d/%m') }} – {{ wi['fine'].strftime('%d/%m') }}</span>
+            {% else %}
+              <i class="bi bi-hand-index me-1"></i>Clicca una settimana
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Slot 4: Quarta -->
+        <div class="col-12 col-sm-6 col-lg-3">
+          <div class="slot-label quarta-label">
+            <i class="bi bi-gift me-1"></i>4ª SETTIMANA
+            {% if not quarta_disponibile %}
+              <span class="badge bg-secondary ms-1" style="font-size:.6rem">Non disp.</span>
+            {% endif %}
+          </div>
+          <div id="badge-quarta"
+               class="selection-badge quarta {% if scelta and scelta.settimana_quarta %}active{% elif not quarta_disponibile %}disabled-slot{% endif %}"
+               onclick="activateSlot('quarta')">
+            {% if scelta and scelta.settimana_quarta %}
+              {% set wi = get_week_info(scelta.settimana_quarta) %}
+              <i class="bi bi-calendar-check me-1"></i>
+              Sett. {{ scelta.settimana_quarta }}
+              <span class="d-block small mt-1 opacity-75">{{ wi['inizio'].strftime('%d/%m') }} – {{ wi['fine'].strftime('%d/%m') }}</span>
+            {% elif quarta_disponibile %}
+              <i class="bi bi-hand-index me-1"></i>Clicca una settimana
+            {% else %}
+              <i class="bi bi-lock me-1"></i>Non disponibile
+            {% endif %}
+          </div>
+        </div>
+
+      </div><!-- /row -->
+    </div>
+
+    <!-- Footer form + save -->
+    <div class="card-footer bg-light">
+      <form id="form-scelta" method="POST" action="{{ url_for('salva_scelta') }}"
+            class="d-flex flex-wrap gap-2 align-items-center">
+        <input type="hidden" id="inp-ferragosto" name="settimana_ferragosto"
+               value="{{ scelta.settimana_ferragosto if scelta and scelta.settimana_ferragosto else '' }}">
+        <input type="hidden" id="inp-aggiuntiva"  name="settimana_aggiuntiva"
+               value="{{ scelta.settimana_aggiuntiva if scelta and scelta.settimana_aggiuntiva else '' }}">
+        <input type="hidden" id="inp-riserva"     name="settimana_riserva"
+               value="{{ scelta.settimana_riserva if scelta and scelta.settimana_riserva else '' }}">
+        <input type="hidden" id="inp-quarta"      name="settimana_quarta"
+               value="{{ scelta.settimana_quarta if scelta and scelta.settimana_quarta else '' }}">
+
+        <div class="text-muted small flex-grow-1">
+          {% if impostazioni and impostazioni.note %}
+            <i class="bi bi-megaphone me-1 text-primary"></i>{{ impostazioni.note }}
+          {% else %}
+            <i class="bi bi-info-circle me-1"></i>
+            Seleziona uno slot in alto, poi clicca la settimana dal calendario. Obbligatoria solo la settimana ferragosto.
+          {% endif %}
+        </div>
+
+        <button type="button" id="btn-reset-aggiuntiva" class="btn btn-outline-secondary btn-sm" style="display:none"
+                onclick="resetSlot('aggiuntiva')">
+          <i class="bi bi-x me-1"></i>Rimuovi aggiuntiva
+        </button>
+        <button type="button" id="btn-reset-riserva" class="btn btn-outline-secondary btn-sm" style="display:none"
+                onclick="resetSlot('riserva')">
+          <i class="bi bi-x me-1"></i>Rimuovi riserva
+        </button>
+        <button type="button" id="btn-reset-quarta" class="btn btn-outline-secondary btn-sm" style="display:none"
+                onclick="resetSlot('quarta')">
+          <i class="bi bi-x me-1"></i>Rimuovi 4ª
+        </button>
+
+        <button type="submit" id="btn-salva" class="btn btn-primary fw-semibold px-4" disabled>
+          <i class="bi bi-save me-2"></i>Salva scelta
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Legenda -->
+  <div class="d-flex flex-wrap gap-3 mb-3 small align-items-center">
+    <span class="fw-semibold text-secondary">Legenda:</span>
+    <span class="legend-dot bg-success"></span><span>Libera</span>
+    <span class="legend-dot bg-warning"></span><span>In esaurimento</span>
+    <span class="legend-dot bg-danger"></span><span>Completa</span>
+    <span class="legend-dot bg-secondary"></span><span>Non disponibile</span>
+    <span class="legend-dot" style="background:#f97316"></span><span>Ferragosto</span>
+    <span class="legend-dot" style="background:#0d6efd"></span><span>Aggiuntiva</span>
+    <span class="legend-dot" style="background:#6f42c1"></span><span>Riserva</span>
+    <span class="legend-dot bg-success"></span><span>4ª sett.</span>
+  </div>
+
+  <!-- ── PRIMA DI FERRAGOSTO ───────────────────────────────── -->
+  {% if settimane_prima %}
+  <div class="mb-4">
+    <div class="section-header prima-header mb-2">
+      <i class="bi bi-brightness-high me-2"></i>
+      PRIMA DI FERRAGOSTO
+      <span class="ms-2 text-muted small fw-normal">giugno – 9 agosto 2026</span>
+    </div>
+    <div class="row g-2">
+      {% for w in settimane_prima %}
+        {% set is_f = scelta and scelta.settimana_ferragosto == w.numero %}
+        {% set is_a = scelta and scelta.settimana_aggiuntiva == w.numero %}
+        {% set is_r = scelta and scelta.settimana_riserva    == w.numero %}
+        {% set is_q = scelta and scelta.settimana_quarta     == w.numero %}
+        <div class="col-6 col-md-3 col-lg-2">
+          <div class="week-card
+               {% if is_f %}selected-ferragosto
+               {% elif is_a %}selected-aggiuntiva
+               {% elif is_r %}selected-riserva
+               {% elif is_q %}selected-quarta
+               {% endif %}
+               {% if w.piena %}week-full{% endif %}"
+               data-week="{{ w.numero }}"
+               data-label="{{ w.label }}"
+               data-piena="{{ 'true' if w.piena else 'false' }}"
+               onclick="selectWeek(this)">
+            <div class="week-num">Sett. {{ w.numero }}</div>
+            <div class="week-dates">{{ w.inizio.strftime('%d/%m') }} – {{ w.fine.strftime('%d/%m') }}</div>
+            <div class="progress mt-2" style="height:4px">
+              <div class="progress-bar
+                {% if w.perc >= 100 %}bg-danger
+                {% elif w.perc >= 60 %}bg-warning
+                {% else %}bg-success{% endif %}"
+                style="width:{{ w.perc }}%"></div>
+            </div>
+            <div class="week-count">{{ w.prenotazioni }}/{{ w.max }}
+              {% if w.piena %}<i class="bi bi-x-circle-fill text-danger ms-1"></i>{% endif %}
+            </div>
+            {% if is_f %}<div class="week-badge ferragosto-badge">☀ Ferragosto</div>
+            {% elif is_a %}<div class="week-badge aggiuntiva-badge">+ Aggiuntiva</div>
+            {% elif is_r %}<div class="week-badge riserva-badge">◈ Riserva</div>
+            {% elif is_q %}<div class="week-badge quarta-badge">◆ 4ª</div>
+            {% endif %}
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- ── DOPO FERRAGOSTO ──────────────────────────────────── -->
+  {% if settimane_dopo %}
+  <div class="mb-4">
+    <div class="section-header dopo-header mb-2">
+      <i class="bi bi-moon-stars me-2"></i>
+      DOPO FERRAGOSTO
+      <span class="ms-2 text-muted small fw-normal">10 agosto – settembre 2026</span>
+    </div>
+    <div class="row g-2">
+      {% for w in settimane_dopo %}
+        {% set is_f = scelta and scelta.settimana_ferragosto == w.numero %}
+        {% set is_a = scelta and scelta.settimana_aggiuntiva == w.numero %}
+        {% set is_r = scelta and scelta.settimana_riserva    == w.numero %}
+        {% set is_q = scelta and scelta.settimana_quarta     == w.numero %}
+        <div class="col-6 col-md-3 col-lg-2">
+          <div class="week-card
+               {% if is_f %}selected-ferragosto
+               {% elif is_a %}selected-aggiuntiva
+               {% elif is_r %}selected-riserva
+               {% elif is_q %}selected-quarta
+               {% endif %}
+               {% if w.piena %}week-full{% endif %}"
+               data-week="{{ w.numero }}"
+               data-label="{{ w.label }}"
+               data-piena="{{ 'true' if w.piena else 'false' }}"
+               onclick="selectWeek(this)">
+            <div class="week-num">Sett. {{ w.numero }}</div>
+            <div class="week-dates">{{ w.inizio.strftime('%d/%m') }} – {{ w.fine.strftime('%d/%m') }}</div>
+            <div class="progress mt-2" style="height:4px">
+              <div class="progress-bar
+                {% if w.perc >= 100 %}bg-danger
+                {% elif w.perc >= 60 %}bg-warning
+                {% else %}bg-success{% endif %}"
+                style="width:{{ w.perc }}%"></div>
+            </div>
+            <div class="week-count">{{ w.prenotazioni }}/{{ w.max }}
+              {% if w.piena %}<i class="bi bi-x-circle-fill text-danger ms-1"></i>{% endif %}
+            </div>
+            {% if is_f %}<div class="week-badge ferragosto-badge">☀ Ferragosto</div>
+            {% elif is_a %}<div class="week-badge aggiuntiva-badge">+ Aggiuntiva</div>
+            {% elif is_r %}<div class="week-badge riserva-badge">◈ Riserva</div>
+            {% elif is_q %}<div class="week-badge quarta-badge">◆ 4ª</div>
+            {% endif %}
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% if not settimane_prima and not settimane_dopo %}
+  <div class="text-center text-muted py-5">
+    <i class="bi bi-calendar-x fs-1 d-block mb-3"></i>
+    Nessuna settimana disponibile. Contatta l'amministratore.
+  </div>
+  {% endif %}
+
+</div><!-- /mt-4 -->
+{% endblock %}
+
+{% block scripts %}
+<script>
+const state = {
+  ferragosto: {{ (scelta.settimana_ferragosto|int if scelta and scelta.settimana_ferragosto else 'null') }},
+  aggiuntiva: {{ (scelta.settimana_aggiuntiva|int if scelta and scelta.settimana_aggiuntiva else 'null') }},
+  riserva:    {{ (scelta.settimana_riserva|int    if scelta and scelta.settimana_riserva    else 'null') }},
+  quarta:     {{ (scelta.settimana_quarta|int     if scelta and scelta.settimana_quarta     else 'null') }},
+};
+const quartaAbilitata = {{ 'true' if quarta_disponibile else 'false' }};
+let activeSlot = null;
+
+const SLOT_ORDER = ['ferragosto', 'aggiuntiva', 'riserva', 'quarta'];
+
+const PLACEHOLDERS = {
+  ferragosto: '<i class="bi bi-hand-index me-1"></i>Clicca una settimana',
+  aggiuntiva: '<i class="bi bi-hand-index me-1"></i>Clicca una settimana',
+  riserva:    '<i class="bi bi-hand-index me-1"></i>Clicca una settimana',
+  quarta:     quartaAbilitata
+              ? '<i class="bi bi-hand-index me-1"></i>Clicca una settimana'
+              : '<i class="bi bi-lock me-1"></i>Non disponibile',
+};
+
+const BADGE_LABELS = {
+  ferragosto: '☀ Ferragosto',
+  aggiuntiva: '+ Aggiuntiva',
+  riserva:    '◈ Riserva',
+  quarta:     '◆ 4ª',
+};
+
+function activateSlot(type) {
+  if (type === 'quarta' && !quartaAbilitata) return;
+  if (activeSlot === type) {
+    // Toggle off
+    activeSlot = null;
+    document.querySelectorAll('.selection-badge').forEach(b => b.classList.remove('selecting'));
+    highlightWeeks();
+    return;
+  }
+  activeSlot = type;
+  document.querySelectorAll('.selection-badge').forEach(b => b.classList.remove('selecting'));
+  document.getElementById('badge-' + type).classList.add('selecting');
+  highlightWeeks();
+}
+
+function highlightWeeks() {
+  const taken = Object.values(state).filter(Boolean);
+  document.querySelectorAll('.week-card').forEach(card => {
+    card.classList.remove('week-highlight');
+    if (activeSlot && card.dataset.piena !== 'true') {
+      const n = parseInt(card.dataset.week);
+      if (!taken.includes(n) || n === state[activeSlot]) {
+        card.classList.add('week-highlight');
+      }
+    }
+  });
+}
+
+function selectWeek(card) {
+  // Auto-activate first empty slot if none active
+  if (!activeSlot) {
+    for (const s of SLOT_ORDER) {
+      if (s === 'quarta' && !quartaAbilitata) continue;
+      if (!state[s]) { activateSlot(s); break; }
+    }
+    if (!activeSlot) return;
+  }
+
+  if (activeSlot === 'quarta' && !quartaAbilitata) return;
+
+  const n     = parseInt(card.dataset.week);
+  const piena = card.dataset.piena === 'true';
+
+  if (piena && state[activeSlot] !== n) {
+    showToast("Settimana completa, scegli un'altra.", 'warning');
+    return;
+  }
+
+  // Duplicate check
+  const others = Object.entries(state)
+    .filter(([k]) => k !== activeSlot)
+    .map(([, v]) => v);
+  if (others.includes(n)) {
+    showToast('Hai già selezionato questa settimana per un\'altro slot.', 'warning');
+    return;
+  }
+
+  // Remove previous selection visual for this slot
+  const old = state[activeSlot];
+  if (old) clearCardStyle(old);
+
+  // Update state & hidden input
+  state[activeSlot] = n;
+  document.getElementById('inp-' + activeSlot).value = n;
+
+  // Apply card style
+  const cls = 'selected-' + activeSlot;
+  card.classList.add(cls);
+  const wb = card.querySelector('.week-badge');
+  if (wb) wb.remove();
+  const badge = document.createElement('div');
+  badge.className = `week-badge ${activeSlot}-badge`;
+  badge.textContent = BADGE_LABELS[activeSlot];
+  card.appendChild(badge);
+
+  // Update slot badge
+  const badgeEl = document.getElementById('badge-' + activeSlot);
+  badgeEl.classList.add('active');
+  badgeEl.classList.remove('selecting');
+  const info = card.dataset.label;
+  const [sett, dates] = info.split(' – ');
+  badgeEl.innerHTML = `<i class="bi bi-calendar-check me-1"></i>${sett}
+    <span class="d-block small mt-1 opacity-75">${dates || ''}</span>`;
+
+  activeSlot = null;
+  highlightWeeks();
+  updateUI();
+}
+
+function clearCardStyle(weekNum) {
+  const card = document.querySelector(`[data-week="${weekNum}"]`);
+  if (!card) return;
+  card.classList.remove('selected-ferragosto', 'selected-aggiuntiva',
+                         'selected-riserva', 'selected-quarta');
+  const wb = card.querySelector('.week-badge');
+  if (wb) wb.remove();
+}
+
+function resetSlot(type) {
+  const old = state[type];
+  if (old) clearCardStyle(old);
+  state[type] = null;
+  document.getElementById('inp-' + type).value = '';
+  const badgeEl = document.getElementById('badge-' + type);
+  badgeEl.classList.remove('active', 'selecting');
+  badgeEl.innerHTML = PLACEHOLDERS[type];
+  highlightWeeks();
+  updateUI();
+}
+
+function updateUI() {
+  document.getElementById('btn-salva').disabled = !state.ferragosto;
+  ['aggiuntiva', 'riserva', 'quarta'].forEach(t => {
+    const btn = document.getElementById('btn-reset-' + t);
+    if (btn) btn.style.display = state[t] ? 'inline-block' : 'none';
+  });
+}
+
+function showToast(msg, type) {
+  let container = document.getElementById('toast-container');
+  if (!container) {
+    container = document.createElement('div');
+    container.id = 'toast-container';
+    container.className = 'position-fixed bottom-0 end-0 p-3';
+    container.style.zIndex = 1100;
+    document.body.appendChild(container);
+  }
+  const id = 'toast-' + Date.now();
+  container.insertAdjacentHTML('beforeend', `
+    <div id="${id}" class="toast align-items-center text-bg-${type === 'warning' ? 'warning text-dark' : 'danger'} border-0" role="alert">
+      <div class="d-flex">
+        <div class="toast-body fw-semibold">${msg}</div>
+        <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast"></button>
+      </div>
+    </div>`);
+  new bootstrap.Toast(document.getElementById(id), { delay: 3000 }).show();
+}
+
+// Init
+updateUI();
+</script>
+{% endblock %}

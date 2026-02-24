@@ -1,0 +1,30 @@
+version: "3.9"
+
+services:
+
+  app:
+    build: .
+    restart: unless-stopped
+    environment:
+      # ── Credenziali dipendenti ────────────────────────────
+      - APP_USERNAME=utenteGT
+      - APP_PASSWORD=FFG_GT
+      # ── Credenziali amministratore (login: Admin) ─────────
+      - ADMIN_PASSWORD=TACCHELLA2026
+      # ── Chiave segreta Flask (CAMBIARE in produzione) ─────
+      - SECRET_KEY=cambia-questa-chiave-segreta-2026
+    volumes:
+      # Persiste il database SQLite anche se il container viene ricreato
+      - ./data:/app/data
+    expose:
+      - "5000"
+
+  nginx:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - app

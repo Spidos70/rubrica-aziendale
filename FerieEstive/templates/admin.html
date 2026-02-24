@@ -1,0 +1,512 @@
+{% extends 'base.html' %}
+{% block title %}Amministrazione – Ferie Estive 2026{% endblock %}
+
+{% block content %}
+<div class="mt-4">
+
+  <!-- Header -->
+  <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+    <div>
+      <h4 class="mb-0 fw-bold"><i class="bi bi-shield-check text-primary me-2"></i>Pannello Amministrazione</h4>
+      <div class="text-muted small mt-1">Gestione ferie estive 2026</div>
+    </div>
+    <a href="{{ url_for('admin_export') }}" class="btn btn-success fw-semibold">
+      <i class="bi bi-file-earmark-excel me-2"></i>Esporta Excel
+    </a>
+  </div>
+
+  <!-- KPI -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+      <div class="card border-0 bg-primary text-white text-center py-3 shadow-sm">
+        <div class="fs-2 fw-bold">{{ totale_attivi }}</div>
+        <div class="small opacity-75">Dipendenti</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card border-0 bg-success text-white text-center py-3 shadow-sm">
+        <div class="fs-2 fw-bold">{{ completati }}</div>
+        <div class="small opacity-75">Scelte completate</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card border-0 bg-warning text-dark text-center py-3 shadow-sm">
+        <div class="fs-2 fw-bold">{{ totale_attivi - completati }}</div>
+        <div class="small opacity-75">In attesa</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card border-0 bg-info text-white text-center py-3 shadow-sm">
+        <div class="fs-2 fw-bold">{{ settimane | selectattr('disponibile') | list | length }}</div>
+        <div class="small opacity-75">Sett. aperte</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <ul class="nav nav-tabs mb-3" id="adminTabs">
+    <li class="nav-item">
+      <a class="nav-link active" data-bs-toggle="tab" href="#tab-grafico">
+        <i class="bi bi-bar-chart-fill me-1"></i>Grafico
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" data-bs-toggle="tab" href="#tab-scelte">
+        <i class="bi bi-calendar-check me-1"></i>Scelte
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" data-bs-toggle="tab" href="#tab-dipendenti">
+        <i class="bi bi-people me-1"></i>Dipendenti
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" data-bs-toggle="tab" href="#tab-settimane">
+        <i class="bi bi-calendar3-week me-1"></i>Settimane
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" data-bs-toggle="tab" href="#tab-impostazioni">
+        <i class="bi bi-gear me-1"></i>Impostazioni
+      </a>
+    </li>
+  </ul>
+
+  <div class="tab-content">
+
+    <!-- ── TAB GRAFICO ───────────────────────────────────────── -->
+    <div class="tab-pane fade show active" id="tab-grafico">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body px-3 pt-3 pb-2">
+
+          <!-- Legenda colori -->
+          <div class="d-flex flex-wrap gap-3 mb-3 small align-items-center">
+            <span class="fw-semibold text-secondary">Tipo scelta:</span>
+            <span><span class="legend-dot" style="background:#f97316"></span> Ferragosto</span>
+            <span><span class="legend-dot" style="background:#0d6efd"></span> Aggiuntiva</span>
+            <span><span class="legend-dot" style="background:#6f42c1"></span> Riserva</span>
+            <span><span class="legend-dot bg-success"></span> 4ª Sett.</span>
+          </div>
+
+          <!-- PRIMA DI FERRAGOSTO -->
+          <h6 class="fw-bold text-secondary text-uppercase mb-2 border-bottom pb-1">
+            <i class="bi bi-brightness-high me-1 text-warning"></i>Prima di Ferragosto
+            <small class="text-muted fw-normal ms-2">giugno – 9 agosto</small>
+          </h6>
+          <div class="row g-2 mb-3">
+            {% for w in settimane if w.numero in settimane_prima %}
+              {% set nomi = nomi_per_settimana[w.numero] %}
+              {% set ct   = w.ct %}
+              <div class="col-12 col-md-6 col-xl-4">
+                <div class="grafico-card">
+                  <div class="d-flex justify-content-between align-items-start mb-1">
+                    <div>
+                      <span class="fw-bold small">Sett. {{ w.numero }}</span>
+                      <span class="text-muted ms-1" style="font-size:.72rem">
+                        {{ w.inizio.strftime('%d/%m') }}–{{ w.fine.strftime('%d/%m') }}
+                      </span>
+                    </div>
+                    <span class="badge {% if w.piena %}bg-danger{% elif w.perc >= 60 %}bg-warning text-dark{% else %}bg-success{% endif %} small">
+                      {{ ct.totale }}/{{ w.max }}
+                    </span>
+                  </div>
+                  <!-- Barra stacked -->
+                  <div class="progress mb-1" style="height:14px; border-radius:4px">
+                    {% if ct.ferragosto > 0 %}
+                      <div class="progress-bar" style="width:{{ (ct.ferragosto/w.max*100)|round }}%;background:#f97316"
+                           title="{{ ct.ferragosto }} ferragosto"></div>
+                    {% endif %}
+                    {% if ct.aggiuntiva > 0 %}
+                      <div class="progress-bar bg-primary" style="width:{{ (ct.aggiuntiva/w.max*100)|round }}%"
+                           title="{{ ct.aggiuntiva }} aggiuntiva"></div>
+                    {% endif %}
+                    {% if ct.riserva > 0 %}
+                      <div class="progress-bar" style="width:{{ (ct.riserva/w.max*100)|round }}%;background:#6f42c1"
+                           title="{{ ct.riserva }} riserva"></div>
+                    {% endif %}
+                    {% if ct.quarta > 0 %}
+                      <div class="progress-bar bg-success" style="width:{{ (ct.quarta/w.max*100)|round }}%"
+                           title="{{ ct.quarta }} 4ª"></div>
+                    {% endif %}
+                  </div>
+                  <!-- Nomi dipendenti -->
+                  {% set tutti = nomi.ferragosto + nomi.aggiuntiva + nomi.riserva + nomi.quarta %}
+                  {% if tutti %}
+                    <div class="nomi-list">
+                      {% for n in nomi.ferragosto %}
+                        <span class="nome-chip" style="background:#fff3e0;border-color:#f97316;color:#c2410c">{{ n }}</span>
+                      {% endfor %}
+                      {% for n in nomi.aggiuntiva %}
+                        <span class="nome-chip" style="background:#e8f0ff;border-color:#0d6efd;color:#0a58ca">{{ n }}</span>
+                      {% endfor %}
+                      {% for n in nomi.riserva %}
+                        <span class="nome-chip" style="background:#f3e8ff;border-color:#6f42c1;color:#5a2d82">{{ n }}</span>
+                      {% endfor %}
+                      {% for n in nomi.quarta %}
+                        <span class="nome-chip" style="background:#edfaf2;border-color:#198754;color:#146c43">{{ n }}</span>
+                      {% endfor %}
+                    </div>
+                  {% else %}
+                    <div class="text-muted" style="font-size:.72rem">Nessuna prenotazione</div>
+                  {% endif %}
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+
+          <!-- DOPO FERRAGOSTO -->
+          <h6 class="fw-bold text-secondary text-uppercase mb-2 border-bottom pb-1">
+            <i class="bi bi-moon-stars me-1 text-primary"></i>Dopo Ferragosto
+            <small class="text-muted fw-normal ms-2">10 agosto – settembre</small>
+          </h6>
+          <div class="row g-2">
+            {% for w in settimane if w.numero in settimane_dopo %}
+              {% set nomi = nomi_per_settimana[w.numero] %}
+              {% set ct   = w.ct %}
+              <div class="col-12 col-md-6 col-xl-4">
+                <div class="grafico-card">
+                  <div class="d-flex justify-content-between align-items-start mb-1">
+                    <div>
+                      <span class="fw-bold small">Sett. {{ w.numero }}</span>
+                      <span class="text-muted ms-1" style="font-size:.72rem">
+                        {{ w.inizio.strftime('%d/%m') }}–{{ w.fine.strftime('%d/%m') }}
+                      </span>
+                    </div>
+                    <span class="badge {% if w.piena %}bg-danger{% elif w.perc >= 60 %}bg-warning text-dark{% else %}bg-success{% endif %} small">
+                      {{ ct.totale }}/{{ w.max }}
+                    </span>
+                  </div>
+                  <div class="progress mb-1" style="height:14px; border-radius:4px">
+                    {% if ct.ferragosto > 0 %}
+                      <div class="progress-bar" style="width:{{ (ct.ferragosto/w.max*100)|round }}%;background:#f97316"></div>
+                    {% endif %}
+                    {% if ct.aggiuntiva > 0 %}
+                      <div class="progress-bar bg-primary" style="width:{{ (ct.aggiuntiva/w.max*100)|round }}%"></div>
+                    {% endif %}
+                    {% if ct.riserva > 0 %}
+                      <div class="progress-bar" style="width:{{ (ct.riserva/w.max*100)|round }}%;background:#6f42c1"></div>
+                    {% endif %}
+                    {% if ct.quarta > 0 %}
+                      <div class="progress-bar bg-success" style="width:{{ (ct.quarta/w.max*100)|round }}%"></div>
+                    {% endif %}
+                  </div>
+                  {% set tutti = nomi.ferragosto + nomi.aggiuntiva + nomi.riserva + nomi.quarta %}
+                  {% if tutti %}
+                    <div class="nomi-list">
+                      {% for n in nomi.ferragosto %}
+                        <span class="nome-chip" style="background:#fff3e0;border-color:#f97316;color:#c2410c">{{ n }}</span>
+                      {% endfor %}
+                      {% for n in nomi.aggiuntiva %}
+                        <span class="nome-chip" style="background:#e8f0ff;border-color:#0d6efd;color:#0a58ca">{{ n }}</span>
+                      {% endfor %}
+                      {% for n in nomi.riserva %}
+                        <span class="nome-chip" style="background:#f3e8ff;border-color:#6f42c1;color:#5a2d82">{{ n }}</span>
+                      {% endfor %}
+                      {% for n in nomi.quarta %}
+                        <span class="nome-chip" style="background:#edfaf2;border-color:#198754;color:#146c43">{{ n }}</span>
+                      {% endfor %}
+                    </div>
+                  {% else %}
+                    <div class="text-muted" style="font-size:.72rem">Nessuna prenotazione</div>
+                  {% endif %}
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+
+        </div><!-- /card-body -->
+      </div>
+    </div><!-- /tab-grafico -->
+
+    <!-- ── TAB SCELTE ─────────────────────────────────────────── -->
+    <div class="tab-pane fade" id="tab-scelte">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header fw-semibold bg-light">
+          <i class="bi bi-calendar-check me-2 text-primary"></i>Riepilogo scelte dipendenti
+          <span class="badge bg-secondary ms-2">{{ completati }} su {{ totale_attivi }}</span>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-hover mb-0 align-middle small">
+            <thead class="table-light">
+              <tr>
+                <th>Dipendente</th>
+                <th><span style="color:#f97316">☀</span> Ferragosto</th>
+                <th><span style="color:#0d6efd">+</span> Aggiuntiva</th>
+                <th><span style="color:#6f42c1">◈</span> Riserva</th>
+                <th><span class="text-success">◆</span> 4ª Sett.</th>
+                <th class="text-muted">Salvata il</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for d in dipendenti if d.attivo %}
+              {% set s = scelte_map.get(d.id) %}
+              <tr>
+                <td class="fw-semibold">{{ d.nome_completo }}</td>
+                {% if s and s.settimana_ferragosto %}
+                  <td>
+                    <span class="badge" style="background:#f97316">Sett. {{ s.settimana_ferragosto }}</span>
+                    {% for w in settimane if w.numero == s.settimana_ferragosto %}
+                      <br><span class="text-muted" style="font-size:.68rem">{{ w.inizio.strftime('%d/%m') }}–{{ w.fine.strftime('%d/%m') }}</span>
+                    {% endfor %}
+                  </td>
+                  <td>
+                    {% if s.settimana_aggiuntiva %}
+                      <span class="badge bg-primary">Sett. {{ s.settimana_aggiuntiva }}</span>
+                      {% for w in settimane if w.numero == s.settimana_aggiuntiva %}
+                        <br><span class="text-muted" style="font-size:.68rem">{{ w.inizio.strftime('%d/%m') }}–{{ w.fine.strftime('%d/%m') }}</span>
+                      {% endfor %}
+                    {% else %}<span class="text-muted">–</span>{% endif %}
+                  </td>
+                  <td>
+                    {% if s.settimana_riserva %}
+                      <span class="badge" style="background:#6f42c1">Sett. {{ s.settimana_riserva }}</span>
+                      {% for w in settimane if w.numero == s.settimana_riserva %}
+                        <br><span class="text-muted" style="font-size:.68rem">{{ w.inizio.strftime('%d/%m') }}–{{ w.fine.strftime('%d/%m') }}</span>
+                      {% endfor %}
+                    {% else %}<span class="text-muted">–</span>{% endif %}
+                  </td>
+                  <td>
+                    {% if s.settimana_quarta %}
+                      <span class="badge bg-success">Sett. {{ s.settimana_quarta }}</span>
+                      {% for w in settimane if w.numero == s.settimana_quarta %}
+                        <br><span class="text-muted" style="font-size:.68rem">{{ w.inizio.strftime('%d/%m') }}–{{ w.fine.strftime('%d/%m') }}</span>
+                      {% endfor %}
+                    {% else %}<span class="text-muted">–</span>{% endif %}
+                  </td>
+                  <td class="text-muted" style="font-size:.75rem">
+                    {{ s.ts_aggiornamento.strftime('%d/%m/%Y %H:%M') }}
+                  </td>
+                {% else %}
+                  <td colspan="5" class="text-muted fst-italic">Nessuna scelta effettuata</td>
+                {% endif %}
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div><!-- /tab-scelte -->
+
+    <!-- ── TAB DIPENDENTI ─────────────────────────────────────── -->
+    <div class="tab-pane fade" id="tab-dipendenti">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header fw-semibold bg-light">
+          <i class="bi bi-people me-2 text-primary"></i>Elenco dipendenti registrati
+          <small class="text-muted ms-2 fw-normal">I dipendenti si registrano inserendo nome/cognome al primo accesso</small>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-hover mb-0 align-middle small">
+            <thead class="table-light">
+              <tr>
+                <th>Dipendente</th>
+                <th class="text-center">Stato</th>
+                <th class="text-center">Scelta</th>
+                <th class="text-end">Azioni</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for d in dipendenti %}
+              {% set s = scelte_map.get(d.id) %}
+              <tr class="{% if not d.attivo %}text-muted{% endif %}">
+                <td class="fw-semibold">{{ d.nome_completo }}</td>
+                <td class="text-center">
+                  {% if d.attivo %}
+                    <span class="badge bg-success">Attivo</span>
+                  {% else %}
+                    <span class="badge bg-secondary">Disattivo</span>
+                  {% endif %}
+                </td>
+                <td class="text-center">
+                  {% if s and s.settimana_ferragosto %}
+                    <span class="badge me-1" style="background:#f97316">F:{{ s.settimana_ferragosto }}</span>
+                    {% if s.settimana_aggiuntiva %}
+                      <span class="badge bg-primary me-1">A:{{ s.settimana_aggiuntiva }}</span>
+                    {% endif %}
+                    {% if s.settimana_riserva %}
+                      <span class="badge me-1" style="background:#6f42c1">R:{{ s.settimana_riserva }}</span>
+                    {% endif %}
+                    {% if s.settimana_quarta %}
+                      <span class="badge bg-success">4ª:{{ s.settimana_quarta }}</span>
+                    {% endif %}
+                  {% else %}
+                    <span class="text-muted small fst-italic">Nessuna scelta</span>
+                  {% endif %}
+                </td>
+                <td class="text-end">
+                  <form method="POST" action="{{ url_for('admin_dipendente') }}" class="d-inline">
+                    <input type="hidden" name="action" value="toggle">
+                    <input type="hidden" name="id" value="{{ d.id }}">
+                    <button type="submit" class="btn btn-sm {% if d.attivo %}btn-outline-secondary{% else %}btn-outline-success{% endif %}">
+                      {% if d.attivo %}Disattiva{% else %}Attiva{% endif %}
+                    </button>
+                  </form>
+                  {% if s %}
+                  <form method="POST" action="{{ url_for('admin_dipendente') }}" class="d-inline ms-1">
+                    <input type="hidden" name="action" value="delete_scelta">
+                    <input type="hidden" name="dipendente_id" value="{{ d.id }}">
+                    <button type="submit" class="btn btn-sm btn-outline-danger"
+                            onclick="return confirm('Eliminare la scelta di {{ d.nome_completo }}?')">
+                      <i class="bi bi-trash"></i> Reset
+                    </button>
+                  </form>
+                  {% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div><!-- /tab-dipendenti -->
+
+    <!-- ── TAB SETTIMANE ─────────────────────────────────────── -->
+    <div class="tab-pane fade" id="tab-settimane">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header fw-semibold bg-light d-flex justify-content-between align-items-center">
+          <span><i class="bi bi-calendar3-week me-2 text-primary"></i>Abilita/disabilita settimane 2026</span>
+          <div>
+            <button class="btn btn-sm btn-outline-success me-1" onclick="toggleAll(true)">Abilita tutte</button>
+            <button class="btn btn-sm btn-outline-secondary" onclick="toggleAll(false)">Disabilita tutte</button>
+          </div>
+        </div>
+        <div class="card-body">
+          <h6 class="fw-bold text-secondary mt-1 mb-2">Prima di Ferragosto (sett. 23–32)</h6>
+          <div class="row g-2 mb-3">
+            {% for w in settimane if w.numero in settimane_prima %}
+              <div class="col-6 col-md-3 col-xl-2">
+                <div class="admin-week-card {% if w.disponibile %}enabled{% endif %}" id="awc-{{ w.numero }}">
+                  <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                      <div class="fw-bold small">Sett. {{ w.numero }}</div>
+                      <div class="text-muted" style="font-size:.7rem">{{ w.inizio.strftime('%d/%m') }}–{{ w.fine.strftime('%d/%m') }}</div>
+                    </div>
+                    <input class="form-check-input week-toggle" type="checkbox" role="switch"
+                           data-week="{{ w.numero }}"
+                           {% if w.disponibile %}checked{% endif %}
+                           onchange="toggleWeek(this, {{ w.numero }})">
+                  </div>
+                  {% if w.ct.totale > 0 %}
+                    <div class="progress mt-1" style="height:3px">
+                      <div class="progress-bar {% if w.piena %}bg-danger{% elif w.perc >= 60 %}bg-warning{% else %}bg-success{% endif %}"
+                           style="width:{{ w.perc }}%"></div>
+                    </div>
+                    <div style="font-size:.65rem" class="text-muted">{{ w.ct.totale }}/{{ w.max }}</div>
+                  {% endif %}
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+          <h6 class="fw-bold text-secondary mb-2">Dopo Ferragosto (sett. 33–38)</h6>
+          <div class="row g-2">
+            {% for w in settimane if w.numero in settimane_dopo %}
+              <div class="col-6 col-md-3 col-xl-2">
+                <div class="admin-week-card {% if w.disponibile %}enabled{% endif %}" id="awc-{{ w.numero }}">
+                  <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                      <div class="fw-bold small">Sett. {{ w.numero }}</div>
+                      <div class="text-muted" style="font-size:.7rem">{{ w.inizio.strftime('%d/%m') }}–{{ w.fine.strftime('%d/%m') }}</div>
+                    </div>
+                    <input class="form-check-input week-toggle" type="checkbox" role="switch"
+                           data-week="{{ w.numero }}"
+                           {% if w.disponibile %}checked{% endif %}
+                           onchange="toggleWeek(this, {{ w.numero }})">
+                  </div>
+                  {% if w.ct.totale > 0 %}
+                    <div class="progress mt-1" style="height:3px">
+                      <div class="progress-bar {% if w.piena %}bg-danger{% elif w.perc >= 60 %}bg-warning{% else %}bg-success{% endif %}"
+                           style="width:{{ w.perc }}%"></div>
+                    </div>
+                    <div style="font-size:.65rem" class="text-muted">{{ w.ct.totale }}/{{ w.max }}</div>
+                  {% endif %}
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div><!-- /tab-settimane -->
+
+    <!-- ── TAB IMPOSTAZIONI ───────────────────────────────────── -->
+    <div class="tab-pane fade" id="tab-impostazioni">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header fw-semibold bg-light">
+          <i class="bi bi-gear me-2 text-primary"></i>Impostazioni generali
+        </div>
+        <div class="card-body">
+          <form method="POST" action="{{ url_for('admin_impostazioni') }}" class="row g-3" style="max-width:600px">
+            <div class="col-12 col-md-6">
+              <label class="form-label fw-semibold text-secondary small">MAX DIPENDENTI PER SETTIMANA</label>
+              <input type="number" name="max_per_settimana" class="form-control"
+                     value="{{ impostazioni.max_per_settimana if impostazioni else 5 }}"
+                     min="1" max="100" required>
+              <div class="form-text">Limite massimo di selezioni totali per settimana</div>
+            </div>
+            <div class="col-12 col-md-6 d-flex align-items-end">
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" role="switch"
+                       name="abilita_quarta" id="switchQuarta"
+                       {% if not impostazioni or impostazioni.abilita_quarta %}checked{% endif %}>
+                <label class="form-check-label fw-semibold" for="switchQuarta">
+                  Abilita selezione 4ª settimana
+                </label>
+              </div>
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-semibold text-secondary small">MESSAGGIO PER I DIPENDENTI</label>
+              <textarea name="note" class="form-control" rows="2"
+                        placeholder="Testo visualizzato nella pagina di selezione ferie...">{{ impostazioni.note if impostazioni else '' }}</textarea>
+            </div>
+            <div class="col-12">
+              <button type="submit" class="btn btn-primary fw-semibold px-4">
+                <i class="bi bi-save me-2"></i>Salva impostazioni
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <div class="card border-0 shadow-sm mt-3">
+        <div class="card-header fw-semibold bg-light">
+          <i class="bi bi-key me-2 text-warning"></i>Credenziali di accesso
+        </div>
+        <div class="card-body small text-muted">
+          <p class="mb-1">Configurabili tramite variabili d'ambiente in <code>docker-compose.yml</code>:</p>
+          <ul class="mb-0">
+            <li><code>APP_USERNAME</code> / <code>APP_PASSWORD</code> – accesso dipendenti (default: <code>utenteGT</code> / <code>FFG_GT</code>)</li>
+            <li><code>ADMIN_PASSWORD</code> – accesso admin (login: <code>Admin</code>)</li>
+            <li><code>SECRET_KEY</code> – chiave segreta Flask (cambiare in produzione)</li>
+          </ul>
+        </div>
+      </div>
+    </div><!-- /tab-impostazioni -->
+
+  </div><!-- /tab-content -->
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function toggleWeek(checkbox, num) {
+  const disp = checkbox.checked ? 1 : 0;
+  fetch('/admin/settimana', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+    body: `numero=${num}&disponibile=${disp}`
+  })
+  .then(r => r.json())
+  .then(data => {
+    document.getElementById('awc-' + num)
+            .classList.toggle('enabled', data.disponibile);
+  });
+}
+
+function toggleAll(state) {
+  document.querySelectorAll('.week-toggle').forEach(cb => {
+    if (cb.checked !== state) {
+      cb.checked = state;
+      toggleWeek(cb, parseInt(cb.dataset.week));
+    }
+  });
+}
+</script>
+{% endblock %}
