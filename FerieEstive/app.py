@@ -17,9 +17,9 @@ ADMIN_PASSWORD  = os.environ.get('ADMIN_PASSWORD', 'TACCHELLA2026')
 # Settimane estive 2026
 # Sett. 23-32: 1 giugno – 9 agosto 2026  (prima di ferragosto)
 # Sett. 33   : 10-16 agosto 2026 → SETTIMANA DI FERRAGOSTO FISSA (non selezionabile)
-# Sett. 34-38: 17 agosto – 20 settembre 2026  (dopo ferragosto)
+# Sett. 34-40: 17 agosto – 4 ottobre 2026  (dopo ferragosto, ultime sett. settembre)
 SETTIMANE_PRIMA  = list(range(23, 33))   # 10 settimane (sett. 23–32)
-SETTIMANE_DOPO   = list(range(34, 39))   #  5 settimane (sett. 34–38)
+SETTIMANE_DOPO   = list(range(34, 41))   #  7 settimane (sett. 34–40)
 SETTIMANE_ESTIVE = SETTIMANE_PRIMA + SETTIMANE_DOPO  # sett. 33 esclusa (fissa)
 
 # Ferragosto 2026 = 15 agosto (sabato) → settimana ISO 33 (10-16 ago) — FISSA PER TUTTI
@@ -588,8 +588,8 @@ def init_db():
     db.create_all()
     if not Impostazioni.query.first():
         db.session.add(Impostazioni(max_per_settimana=5, abilita_quarta=True))
-    # Abilita di default solo le settimane estive (23-38)
-    existing = {s.numero_settimana
+    # Sincronizza settimane: aggiunge le mancanti e abilita quelle nuove in SETTIMANE_ESTIVE
+    existing = {s.numero_settimana: s
                 for s in SettimanaConfig.query.filter_by(anno=2026).all()}
     for n in range(1, 53):
         if n not in existing:
@@ -598,6 +598,9 @@ def init_db():
                 numero_settimana=n,
                 disponibile=(n in SETTIMANE_ESTIVE)
             ))
+        elif n in SETTIMANE_ESTIVE and not existing[n].disponibile:
+            # Attiva settimane aggiunte a SETTIMANE_ESTIVE dopo la prima inizializzazione
+            existing[n].disponibile = True
     db.session.commit()
 
 with app.app_context():
