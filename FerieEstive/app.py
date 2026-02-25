@@ -264,8 +264,9 @@ def dashboard():
         n = w['numero']
         w['prenotazioni'] = week_counts.get(n, 0)
         w['max']          = max_pw
-        w['piena']        = w['disponibile'] and w['prenotazioni'] >= max_pw
-        w['perc']         = min(100, int(w['prenotazioni'] / max_pw * 100)) if max_pw > 0 else 0
+        # Nessun limite per conteggio: la settimana è bloccata SOLO se l'admin la disabilita
+        w['piena']        = not w['disponibile']
+        w['perc']         = 0
 
     # Settimane per il picker ferragosto (solo sett. 32 e 34)
     all_weeks_map    = {w['numero']: w for w in all_weeks}

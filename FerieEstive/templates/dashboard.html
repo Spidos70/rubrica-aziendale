@@ -185,25 +185,14 @@
                  onclick="selectFerragostoWeek({{ w.numero }})">
               <div class="ferragosto-card-title fw-bold fs-6 mb-1"
                    style="color: {{ '#c2410c' if is_f else '#6c757d' }}">
-                {{ '&#9728; PRIMA DI FERRAGOSTO' if is_pre else '&#9790; DOPO FERRAGOSTO' }}
+                {% if is_pre %}☀ PRIMA DI FERRAGOSTO{% else %}🌙 DOPO FERRAGOSTO{% endif %}
               </div>
               <div class="week-num">Settimana {{ w.numero }}</div>
               <div class="week-dates">
                 {{ w.inizio.strftime('%d %b') }} &ndash; {{ w.fine.strftime('%d %b %Y') }}
               </div>
-              <div class="progress mt-2" style="height:5px">
-                <div class="progress-bar
-                  {% if w.perc >= 100 %}bg-danger
-                  {% elif w.perc >= 60 %}bg-warning
-                  {% else %}bg-success{% endif %}"
-                  style="width:{{ w.perc }}%"></div>
-              </div>
-              <div class="week-count mt-1">
-                {{ w.prenotazioni }}/{{ w.max }}
-                {% if w.piena %}<i class="bi bi-x-circle-fill text-danger ms-1"></i>{% endif %}
-              </div>
               {% if is_f %}
-                <div class="week-badge ferragosto-badge">&#9728; Ferragosto</div>
+                <div class="week-badge ferragosto-badge">☀ Ferragosto</div>
               {% endif %}
             </div>
           </div>
@@ -258,20 +247,10 @@
                onclick="selectWeek(this)">
             <div class="week-num">Sett. {{ w.numero }}</div>
             <div class="week-dates">{{ w.inizio.strftime('%d/%m') }} – {{ w.fine.strftime('%d/%m') }}</div>
-            <div class="progress mt-2" style="height:4px">
-              <div class="progress-bar
-                {% if w.perc >= 100 %}bg-danger
-                {% elif w.perc >= 60 %}bg-warning
-                {% else %}bg-success{% endif %}"
-                style="width:{{ w.perc }}%"></div>
-            </div>
-            <div class="week-count">{{ w.prenotazioni }}/{{ w.max }}
-              {% if w.piena %}<i class="bi bi-x-circle-fill text-danger ms-1"></i>{% endif %}
-            </div>
-            {% if is_f %}<div class="week-badge ferragosto-badge">&#9728; Ferragosto</div>
+            {% if is_f %}<div class="week-badge ferragosto-badge">☀ Ferragosto</div>
             {% elif is_a %}<div class="week-badge aggiuntiva-badge">+ Aggiuntiva</div>
-            {% elif is_r %}<div class="week-badge riserva-badge">&#9672; Riserva</div>
-            {% elif is_q %}<div class="week-badge quarta-badge">&#9670; 4&#170;</div>
+            {% elif is_r %}<div class="week-badge riserva-badge">◈ Riserva</div>
+            {% elif is_q %}<div class="week-badge quarta-badge">◆ 4ª</div>
             {% endif %}
           </div>
         </div>
@@ -308,20 +287,10 @@
                onclick="selectWeek(this)">
             <div class="week-num">Sett. {{ w.numero }}</div>
             <div class="week-dates">{{ w.inizio.strftime('%d/%m') }} – {{ w.fine.strftime('%d/%m') }}</div>
-            <div class="progress mt-2" style="height:4px">
-              <div class="progress-bar
-                {% if w.perc >= 100 %}bg-danger
-                {% elif w.perc >= 60 %}bg-warning
-                {% else %}bg-success{% endif %}"
-                style="width:{{ w.perc }}%"></div>
-            </div>
-            <div class="week-count">{{ w.prenotazioni }}/{{ w.max }}
-              {% if w.piena %}<i class="bi bi-x-circle-fill text-danger ms-1"></i>{% endif %}
-            </div>
-            {% if is_f %}<div class="week-badge ferragosto-badge">&#9728; Ferragosto</div>
+            {% if is_f %}<div class="week-badge ferragosto-badge">☀ Ferragosto</div>
             {% elif is_a %}<div class="week-badge aggiuntiva-badge">+ Aggiuntiva</div>
-            {% elif is_r %}<div class="week-badge riserva-badge">&#9672; Riserva</div>
-            {% elif is_q %}<div class="week-badge quarta-badge">&#9670; 4&#170;</div>
+            {% elif is_r %}<div class="week-badge riserva-badge">◈ Riserva</div>
+            {% elif is_q %}<div class="week-badge quarta-badge">◆ 4ª</div>
             {% endif %}
           </div>
         </div>
