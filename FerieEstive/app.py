@@ -21,6 +21,13 @@ SETTIMANE_PRIMA  = list(range(23, 33))   # 10 settimane
 SETTIMANE_DOPO   = list(range(33, 39))   # 6 settimane
 SETTIMANE_ESTIVE = SETTIMANE_PRIMA + SETTIMANE_DOPO
 
+# Ferragosto 2026 = 15 agosto (sabato) → settimana ISO 33 (10-16 ago)
+# Settimana contigua PRIMA  = sett. 32 (3–9 agosto)
+# Settimana contigua DOPO   = sett. 34 (17–23 agosto)
+SETTIMANA_PRE_FERRAGOSTO  = 32
+SETTIMANA_POST_FERRAGOSTO = 34
+SETTIMANE_FERRAGOSTO      = [SETTIMANA_PRE_FERRAGOSTO, SETTIMANA_POST_FERRAGOSTO]
+
 # Database
 data_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')
 os.makedirs(data_dir, exist_ok=True)
@@ -258,6 +265,11 @@ def dashboard():
         w['piena']        = w['disponibile'] and w['prenotazioni'] >= max_pw
         w['perc']         = min(100, int(w['prenotazioni'] / max_pw * 100)) if max_pw > 0 else 0
 
+    # Settimane per il picker ferragosto (solo sett. 32 e 34)
+    all_weeks_map    = {w['numero']: w for w in all_weeks}
+    ferragosto_weeks = [all_weeks_map[n] for n in SETTIMANE_FERRAGOSTO if n in all_weeks_map]
+
+    # Settimane per il calendario aggiuntiva/riserva/quarta (tutte le estive disponibili)
     settimane_prima = [w for w in all_weeks if w['categoria'] == 'prima' and w['disponibile']]
     settimane_dopo  = [w for w in all_weeks if w['categoria'] == 'dopo'  and w['disponibile']]
 
@@ -267,11 +279,14 @@ def dashboard():
 
     return render_template('dashboard.html',
         dipendente=dipendente,
+        ferragosto_weeks=ferragosto_weeks,
         settimane_prima=settimane_prima,
         settimane_dopo=settimane_dopo,
         scelta=scelta,
         quarta_disponibile=quarta_disponibile,
         impostazioni=impostazioni,
+        settimana_pre_ferragosto=SETTIMANA_PRE_FERRAGOSTO,
+        settimana_post_ferragosto=SETTIMANA_POST_FERRAGOSTO,
     )
 
 
@@ -288,7 +303,13 @@ def salva_scelta():
     quarta     = request.form.get('settimana_quarta',     type=int) or None
 
     if not ferragosto:
-        flash('Devi selezionare almeno la settimana di ferragosto.', 'danger')
+        flash('Devi selezionare la settimana di ferragosto.', 'danger')
+        return redirect(url_for('dashboard'))
+
+    # La settimana di ferragosto può essere SOLO sett. 32 (prima) o sett. 34 (dopo)
+    if ferragosto not in SETTIMANE_FERRAGOSTO:
+        flash(f'La settimana di ferragosto deve essere la sett. {SETTIMANA_PRE_FERRAGOSTO} '
+              f'(prima, 3–9 ago) oppure la sett. {SETTIMANA_POST_FERRAGOSTO} (dopo, 17–23 ago).', 'danger')
         return redirect(url_for('dashboard'))
 
     # Unicità tra tutte le scelte

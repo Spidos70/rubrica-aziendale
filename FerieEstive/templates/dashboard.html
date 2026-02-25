@@ -30,21 +30,21 @@
     <div class="card-body p-3">
       <div class="row g-2">
 
-        <!-- Slot 1: Ferragosto (obbligatorio) -->
+        <!-- Slot 1: Ferragosto (obbligatorio) — click scrolls to picker -->
         <div class="col-12 col-sm-6 col-lg-3">
           <div class="slot-label ferragosto-label">
             <i class="bi bi-sun me-1"></i>SETT. FERRAGOSTO <span class="text-danger">*</span>
           </div>
           <div id="badge-ferragosto"
                class="selection-badge ferragosto {% if scelta and scelta.settimana_ferragosto %}active{% endif %}"
-               onclick="activateSlot('ferragosto')">
+               onclick="document.getElementById('ferragosto-picker').scrollIntoView({behavior:'smooth'})">
             {% if scelta and scelta.settimana_ferragosto %}
               {% set wi = get_week_info(scelta.settimana_ferragosto) %}
               <i class="bi bi-calendar-check me-1"></i>
               Sett. {{ scelta.settimana_ferragosto }}
               <span class="d-block small mt-1 opacity-75">{{ wi['inizio'].strftime('%d/%m') }} – {{ wi['fine'].strftime('%d/%m') }}</span>
             {% else %}
-              <i class="bi bi-hand-index me-1"></i>Clicca una settimana
+              <i class="bi bi-hand-index me-1"></i>Scegli qui sotto
             {% endif %}
           </div>
         </div>
@@ -132,7 +132,7 @@
             <i class="bi bi-megaphone me-1 text-primary"></i>{{ impostazioni.note }}
           {% else %}
             <i class="bi bi-info-circle me-1"></i>
-            Seleziona uno slot in alto, poi clicca la settimana dal calendario. Obbligatoria solo la settimana ferragosto.
+            Obbligatoria la settimana ferragosto. Le altre sono opzionali.
           {% endif %}
         </div>
 
@@ -156,20 +156,86 @@
     </div>
   </div>
 
-  <!-- Legenda -->
-  <div class="d-flex flex-wrap gap-3 mb-3 small align-items-center">
+  <!-- ── STEP 1: PICKER SETTIMANA FERRAGOSTO ───────────────── -->
+  <div id="ferragosto-picker" class="card border-0 shadow-sm mb-4">
+    <div class="card-header fw-semibold"
+         style="background: linear-gradient(135deg, #fff7ed, #fef3c7); border-left: 3px solid #f97316; color: #92400e;">
+      <i class="bi bi-sun-fill text-warning me-2"></i>
+      STEP 1 &ndash; Settimana di Ferragosto <span class="text-danger ms-1">*</span>
+      <span class="text-muted small ms-2 fw-normal">Scegli la settimana contigua al 15 agosto</span>
+    </div>
+    <div class="card-body p-3">
+      <div class="row g-3 justify-content-center">
+        {% for w in ferragosto_weeks %}
+          {% set is_f = scelta and scelta.settimana_ferragosto == w.numero %}
+          {% set is_pre = w.numero == settimana_pre_ferragosto %}
+          <div class="col-12 col-sm-5">
+            <div class="week-card ferragosto-picker-card text-center position-relative
+                         {{ 'selected-ferragosto' if is_f else '' }}"
+                 data-week="{{ w.numero }}"
+                 data-label="{{ w.label }}"
+                 data-piena="{{ 'true' if w.piena else 'false' }}"
+                 onclick="selectFerragostoWeek({{ w.numero }})">
+              <div class="ferragosto-card-title fw-bold fs-6 mb-1"
+                   style="color: {{ '#c2410c' if is_f else '#6c757d' }}">
+                {{ '&#9728; PRIMA DI FERRAGOSTO' if is_pre else '&#9790; DOPO FERRAGOSTO' }}
+              </div>
+              <div class="week-num">Settimana {{ w.numero }}</div>
+              <div class="week-dates">
+                {{ w.inizio.strftime('%d %b') }} &ndash; {{ w.fine.strftime('%d %b %Y') }}
+              </div>
+              <div class="progress mt-2" style="height:5px">
+                <div class="progress-bar
+                  {% if w.perc >= 100 %}bg-danger
+                  {% elif w.perc >= 60 %}bg-warning
+                  {% else %}bg-success{% endif %}"
+                  style="width:{{ w.perc }}%"></div>
+              </div>
+              <div class="week-count mt-1">
+                {{ w.prenotazioni }}/{{ w.max }}
+                {% if w.piena %}<i class="bi bi-x-circle-fill text-danger ms-1"></i>{% endif %}
+              </div>
+              {% if is_f %}
+                <div class="week-badge ferragosto-badge">&#9728; Ferragosto</div>
+              {% endif %}
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+      <div class="text-center mt-2">
+        <button type="button" id="btn-reset-ferragosto" class="btn btn-outline-secondary btn-sm"
+                onclick="resetFerragosto()"
+                style="{{ '' if scelta and scelta.settimana_ferragosto else 'display:none' }}">
+          <i class="bi bi-x me-1"></i>Rimuovi selezione ferragosto
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── LEGENDA ────────────────────────────────────────────── -->
+  <div class="d-flex flex-wrap gap-3 mb-2 small align-items-center">
     <span class="fw-semibold text-secondary">Legenda:</span>
     <span class="legend-dot bg-success"></span><span>Libera</span>
     <span class="legend-dot bg-warning"></span><span>In esaurimento</span>
     <span class="legend-dot bg-danger"></span><span>Completa</span>
-    <span class="legend-dot bg-secondary"></span><span>Non disponibile</span>
     <span class="legend-dot" style="background:#f97316"></span><span>Ferragosto</span>
     <span class="legend-dot" style="background:#0d6efd"></span><span>Aggiuntiva</span>
     <span class="legend-dot" style="background:#6f42c1"></span><span>Riserva</span>
-    <span class="legend-dot bg-success"></span><span>4ª sett.</span>
+    <span class="legend-dot" style="background:#198754"></span><span>4ª sett.</span>
   </div>
 
-  <!-- ── PRIMA DI FERRAGOSTO ───────────────────────────────── -->
+  <!-- ── STEP 2: CALENDARIO SETTIMANE AGGIUNTIVE ───────────── -->
+  <div class="mb-2 d-flex align-items-center gap-2 flex-wrap">
+    <span class="fw-semibold small" style="color:#0a58ca">
+      <i class="bi bi-calendar3 me-1"></i>STEP 2 &ndash; Settimane aggiuntive
+      <span class="text-muted fw-normal">(opzionale)</span>
+    </span>
+    <span class="text-muted small">
+      Seleziona uno slot (Aggiuntiva / Riserva / 4ª) poi clicca una settimana nel calendario
+    </span>
+  </div>
+
+  <!-- PRIMA DI FERRAGOSTO -->
   {% if settimane_prima %}
   <div class="mb-4">
     <div class="section-header prima-header mb-2">
@@ -207,10 +273,10 @@
             <div class="week-count">{{ w.prenotazioni }}/{{ w.max }}
               {% if w.piena %}<i class="bi bi-x-circle-fill text-danger ms-1"></i>{% endif %}
             </div>
-            {% if is_f %}<div class="week-badge ferragosto-badge">☀ Ferragosto</div>
+            {% if is_f %}<div class="week-badge ferragosto-badge">&#9728; Ferragosto</div>
             {% elif is_a %}<div class="week-badge aggiuntiva-badge">+ Aggiuntiva</div>
-            {% elif is_r %}<div class="week-badge riserva-badge">◈ Riserva</div>
-            {% elif is_q %}<div class="week-badge quarta-badge">◆ 4ª</div>
+            {% elif is_r %}<div class="week-badge riserva-badge">&#9672; Riserva</div>
+            {% elif is_q %}<div class="week-badge quarta-badge">&#9670; 4&#170;</div>
             {% endif %}
           </div>
         </div>
@@ -219,7 +285,7 @@
   </div>
   {% endif %}
 
-  <!-- ── DOPO FERRAGOSTO ──────────────────────────────────── -->
+  <!-- DOPO FERRAGOSTO -->
   {% if settimane_dopo %}
   <div class="mb-4">
     <div class="section-header dopo-header mb-2">
@@ -257,10 +323,10 @@
             <div class="week-count">{{ w.prenotazioni }}/{{ w.max }}
               {% if w.piena %}<i class="bi bi-x-circle-fill text-danger ms-1"></i>{% endif %}
             </div>
-            {% if is_f %}<div class="week-badge ferragosto-badge">☀ Ferragosto</div>
+            {% if is_f %}<div class="week-badge ferragosto-badge">&#9728; Ferragosto</div>
             {% elif is_a %}<div class="week-badge aggiuntiva-badge">+ Aggiuntiva</div>
-            {% elif is_r %}<div class="week-badge riserva-badge">◈ Riserva</div>
-            {% elif is_q %}<div class="week-badge quarta-badge">◆ 4ª</div>
+            {% elif is_r %}<div class="week-badge riserva-badge">&#9672; Riserva</div>
+            {% elif is_q %}<div class="week-badge quarta-badge">&#9670; 4&#170;</div>
             {% endif %}
           </div>
         </div>
@@ -290,10 +356,10 @@ const state = {
 const quartaAbilitata = {{ 'true' if quarta_disponibile else 'false' }};
 let activeSlot = null;
 
-const SLOT_ORDER = ['ferragosto', 'aggiuntiva', 'riserva', 'quarta'];
+// aggiuntiva/riserva/quarta only — ferragosto has its own picker
+const SLOT_ORDER = ['aggiuntiva', 'riserva', 'quarta'];
 
 const PLACEHOLDERS = {
-  ferragosto: '<i class="bi bi-hand-index me-1"></i>Clicca una settimana',
   aggiuntiva: '<i class="bi bi-hand-index me-1"></i>Clicca una settimana',
   riserva:    '<i class="bi bi-hand-index me-1"></i>Clicca una settimana',
   quarta:     quartaAbilitata
@@ -302,16 +368,101 @@ const PLACEHOLDERS = {
 };
 
 const BADGE_LABELS = {
-  ferragosto: '☀ Ferragosto',
+  ferragosto: '\u2600 Ferragosto',
   aggiuntiva: '+ Aggiuntiva',
-  riserva:    '◈ Riserva',
-  quarta:     '◆ 4ª',
+  riserva:    '\u25C8 Riserva',
+  quarta:     '\u25C6 4\u00AA',
 };
+
+// ── Ferragosto picker ──────────────────────────────────────
+
+function selectFerragostoWeek(weekNum) {
+  if (state.ferragosto === weekNum) {
+    resetFerragosto();
+    return;
+  }
+  // Remove ferragosto style from old main-grid card (if any)
+  if (state.ferragosto) {
+    const oldCard = document.querySelector(
+      `.week-card:not(.ferragosto-picker-card)[data-week="${state.ferragosto}"]`);
+    if (oldCard) {
+      oldCard.classList.remove('selected-ferragosto');
+      const wb = oldCard.querySelector('.week-badge');
+      if (wb) wb.remove();
+    }
+  }
+  state.ferragosto = weekNum;
+  document.getElementById('inp-ferragosto').value = weekNum;
+  updateFerragostoCards();
+  updateFerragostoBadge(weekNum);
+  // Also mark main-grid card (week 32 or 34 appears there too)
+  const mainCard = document.querySelector(
+    `.week-card:not(.ferragosto-picker-card)[data-week="${weekNum}"]`);
+  if (mainCard) {
+    mainCard.classList.remove('selected-aggiuntiva', 'selected-riserva', 'selected-quarta');
+    mainCard.classList.add('selected-ferragosto');
+    const wb = mainCard.querySelector('.week-badge');
+    if (wb) wb.remove();
+    const badge = document.createElement('div');
+    badge.className = 'week-badge ferragosto-badge';
+    badge.textContent = BADGE_LABELS.ferragosto;
+    mainCard.appendChild(badge);
+  }
+  updateUI();
+}
+
+function resetFerragosto() {
+  if (state.ferragosto) {
+    const oldCard = document.querySelector(
+      `.week-card:not(.ferragosto-picker-card)[data-week="${state.ferragosto}"]`);
+    if (oldCard) {
+      oldCard.classList.remove('selected-ferragosto');
+      const wb = oldCard.querySelector('.week-badge');
+      if (wb) wb.remove();
+    }
+  }
+  state.ferragosto = null;
+  document.getElementById('inp-ferragosto').value = '';
+  updateFerragostoCards();
+  const badgeEl = document.getElementById('badge-ferragosto');
+  badgeEl.classList.remove('active');
+  badgeEl.innerHTML = '<i class="bi bi-hand-index me-1"></i>Scegli qui sotto';
+  updateUI();
+}
+
+function updateFerragostoCards() {
+  document.querySelectorAll('.ferragosto-picker-card').forEach(card => {
+    const n = parseInt(card.dataset.week);
+    const selected = state.ferragosto === n;
+    card.classList.toggle('selected-ferragosto', selected);
+    const title = card.querySelector('.ferragosto-card-title');
+    if (title) title.style.color = selected ? '#c2410c' : '#6c757d';
+    const existing = card.querySelector('.week-badge');
+    if (existing) existing.remove();
+    if (selected) {
+      const badge = document.createElement('div');
+      badge.className = 'week-badge ferragosto-badge';
+      badge.textContent = BADGE_LABELS.ferragosto;
+      card.appendChild(badge);
+    }
+  });
+}
+
+function updateFerragostoBadge(weekNum) {
+  const card = document.querySelector(`.ferragosto-picker-card[data-week="${weekNum}"]`);
+  const label = card ? card.dataset.label : `Sett. ${weekNum}`;
+  const [sett, dates] = label.split(' \u2013 ');
+  const badgeEl = document.getElementById('badge-ferragosto');
+  badgeEl.classList.add('active');
+  badgeEl.innerHTML = `<i class="bi bi-calendar-check me-1"></i>${sett}
+    <span class="d-block small mt-1 opacity-75">${dates || ''}</span>`;
+}
+
+// ── Main calendar (aggiuntiva / riserva / quarta) ──────────
 
 function activateSlot(type) {
   if (type === 'quarta' && !quartaAbilitata) return;
   if (activeSlot === type) {
-    // Toggle off
     activeSlot = null;
     document.querySelectorAll('.selection-badge').forEach(b => b.classList.remove('selecting'));
     highlightWeeks();
@@ -325,7 +476,7 @@ function activateSlot(type) {
 
 function highlightWeeks() {
   const taken = Object.values(state).filter(Boolean);
-  document.querySelectorAll('.week-card').forEach(card => {
+  document.querySelectorAll('.week-card:not(.ferragosto-picker-card)').forEach(card => {
     card.classList.remove('week-highlight');
     if (activeSlot && card.dataset.piena !== 'true') {
       const n = parseInt(card.dataset.week);
@@ -337,7 +488,8 @@ function highlightWeeks() {
 }
 
 function selectWeek(card) {
-  // Auto-activate first empty slot if none active
+  if (card.classList.contains('ferragosto-picker-card')) return;
+
   if (!activeSlot) {
     for (const s of SLOT_ORDER) {
       if (s === 'quarta' && !quartaAbilitata) continue;
@@ -345,37 +497,38 @@ function selectWeek(card) {
     }
     if (!activeSlot) return;
   }
-
   if (activeSlot === 'quarta' && !quartaAbilitata) return;
 
   const n     = parseInt(card.dataset.week);
   const piena = card.dataset.piena === 'true';
+
+  // Block if already used as ferragosto
+  if (state.ferragosto === n) {
+    showToast('Questa settimana è già selezionata come settimana ferragosto.', 'warning');
+    return;
+  }
 
   if (piena && state[activeSlot] !== n) {
     showToast("Settimana completa, scegli un'altra.", 'warning');
     return;
   }
 
-  // Duplicate check
+  // Duplicate check among aggiuntiva/riserva/quarta
   const others = Object.entries(state)
-    .filter(([k]) => k !== activeSlot)
+    .filter(([k]) => k !== activeSlot && k !== 'ferragosto')
     .map(([, v]) => v);
   if (others.includes(n)) {
-    showToast('Hai già selezionato questa settimana per un\'altro slot.', 'warning');
+    showToast("Hai già selezionato questa settimana per un altro slot.", 'warning');
     return;
   }
 
-  // Remove previous selection visual for this slot
   const old = state[activeSlot];
   if (old) clearCardStyle(old);
 
-  // Update state & hidden input
   state[activeSlot] = n;
   document.getElementById('inp-' + activeSlot).value = n;
 
-  // Apply card style
-  const cls = 'selected-' + activeSlot;
-  card.classList.add(cls);
+  card.classList.add('selected-' + activeSlot);
   const wb = card.querySelector('.week-badge');
   if (wb) wb.remove();
   const badge = document.createElement('div');
@@ -383,12 +536,10 @@ function selectWeek(card) {
   badge.textContent = BADGE_LABELS[activeSlot];
   card.appendChild(badge);
 
-  // Update slot badge
   const badgeEl = document.getElementById('badge-' + activeSlot);
   badgeEl.classList.add('active');
   badgeEl.classList.remove('selecting');
-  const info = card.dataset.label;
-  const [sett, dates] = info.split(' – ');
+  const [sett, dates] = card.dataset.label.split(' \u2013 ');
   badgeEl.innerHTML = `<i class="bi bi-calendar-check me-1"></i>${sett}
     <span class="d-block small mt-1 opacity-75">${dates || ''}</span>`;
 
@@ -398,7 +549,8 @@ function selectWeek(card) {
 }
 
 function clearCardStyle(weekNum) {
-  const card = document.querySelector(`[data-week="${weekNum}"]`);
+  const card = document.querySelector(
+    `.week-card:not(.ferragosto-picker-card)[data-week="${weekNum}"]`);
   if (!card) return;
   card.classList.remove('selected-ferragosto', 'selected-aggiuntiva',
                          'selected-riserva', 'selected-quarta');
@@ -420,6 +572,8 @@ function resetSlot(type) {
 
 function updateUI() {
   document.getElementById('btn-salva').disabled = !state.ferragosto;
+  const btnF = document.getElementById('btn-reset-ferragosto');
+  if (btnF) btnF.style.display = state.ferragosto ? 'inline-block' : 'none';
   ['aggiuntiva', 'riserva', 'quarta'].forEach(t => {
     const btn = document.getElementById('btn-reset-' + t);
     if (btn) btn.style.display = state[t] ? 'inline-block' : 'none';
