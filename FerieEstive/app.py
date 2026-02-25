@@ -16,17 +16,19 @@ ADMIN_PASSWORD  = os.environ.get('ADMIN_PASSWORD', 'TACCHELLA2026')
 
 # Settimane estive 2026
 # Sett. 23-32: 1 giugno – 9 agosto 2026  (prima di ferragosto)
-# Sett. 33-38: 10 agosto – 20 settembre 2026  (dopo ferragosto)
-SETTIMANE_PRIMA  = list(range(23, 33))   # 10 settimane
-SETTIMANE_DOPO   = list(range(33, 39))   # 6 settimane
-SETTIMANE_ESTIVE = SETTIMANE_PRIMA + SETTIMANE_DOPO
+# Sett. 33   : 10-16 agosto 2026 → SETTIMANA DI FERRAGOSTO FISSA (non selezionabile)
+# Sett. 34-38: 17 agosto – 20 settembre 2026  (dopo ferragosto)
+SETTIMANE_PRIMA  = list(range(23, 33))   # 10 settimane (sett. 23–32)
+SETTIMANE_DOPO   = list(range(34, 39))   #  5 settimane (sett. 34–38)
+SETTIMANE_ESTIVE = SETTIMANE_PRIMA + SETTIMANE_DOPO  # sett. 33 esclusa (fissa)
 
-# Ferragosto 2026 = 15 agosto (sabato) → settimana ISO 33 (10-16 ago)
-# Settimana contigua PRIMA  = sett. 32 (3–9 agosto)
-# Settimana contigua DOPO   = sett. 34 (17–23 agosto)
-SETTIMANA_PRE_FERRAGOSTO  = 32
-SETTIMANA_POST_FERRAGOSTO = 34
-SETTIMANE_FERRAGOSTO      = [SETTIMANA_PRE_FERRAGOSTO, SETTIMANA_POST_FERRAGOSTO]
+# Ferragosto 2026 = 15 agosto (sabato) → settimana ISO 33 (10-16 ago) — FISSA PER TUTTI
+# Settimana contigua PRIMA  = sett. 32 (3–9 agosto)   → selezionabile come ferragosto
+# Settimana contigua DOPO   = sett. 34 (17–23 agosto) → selezionabile come ferragosto
+SETTIMANA_FERRAGOSTO_FISSA = 33   # fissa per tutti, non selezionabile
+SETTIMANA_PRE_FERRAGOSTO   = 32
+SETTIMANA_POST_FERRAGOSTO  = 34
+SETTIMANE_FERRAGOSTO       = [SETTIMANA_PRE_FERRAGOSTO, SETTIMANA_POST_FERRAGOSTO]
 
 # Database
 data_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')
